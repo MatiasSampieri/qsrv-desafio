@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App de Gestión - Práctica QuickServer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    /* Animación suave para transiciones */
+    .fade-in {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 h-screen flex flex-col font-sans">
+
+  <div class="bg-gray-900 text-white px-4 py-3 flex items-center justify-between shadow-md z-50">
+    <div class="flex items-center space-x-4">
+      <i class="fa-solid fa-server text-blue-400"></i>
+      <span class="font-semibold text-sm">URL base de QuickServer:</span>
+      <input type="text" id="base-url"
+        class="text-black px-3 py-1 rounded text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Ej: http://localhost:3000" value="http://localhost:3000">
+      <button id="btn-set-url"
+        class="bg-blue-600 hover:bg-blue-500 px-4 py-1 rounded text-sm font-bold transition-colors">Fijar URL</button>
+    </div>
+    <div id="server-status" class="text-xs text-yellow-400 font-mono">Esperando peticiones...</div>
+  </div>
+
+  <div id="login-view"
+    class="flex-grow flex items-center justify-center fade-in bg-gradient-to-br from-blue-500 to-purple-600">
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-96">
+      <div class="text-center mb-6">
+        <i class="fa-solid fa-box-open text-4xl text-blue-600 mb-2"></i>
+        <h1 class="text-2xl font-bold text-gray-800">Bienvenido</h1>
+        <p class="text-gray-500 text-sm">Ingresa a tu cuenta para continuar</p>
+      </div>
+
+      <form id="form-login" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Nombre</label>
+          <input type="text" id="login-nombre" required
+            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Email</label>
+          <input type="text" id="login-email" required
+            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+          <input type="password" id="login-pass" required
+            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <button type="submit"
+          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+          Iniciar Sesión
+        </button>
+      </form>
+      <div id="login-error" class="hidden mt-4 text-sm text-red-600 text-center bg-red-100 py-2 rounded"></div>
+    </div>
+  </div>
+
+  <div id="dashboard-view" class="hidden flex-grow flex fade-in">
+
+    <div class="w-64 bg-white shadow-lg flex flex-col">
+      <div class="p-6 text-center border-b">
+        <i class="fa-solid fa-box-open text-3xl text-blue-600"></i>
+        <h2 class="text-xl font-bold mt-2 text-gray-800">Inventario Pro</h2>
+      </div>
+      <nav class="flex-grow p-4 space-y-2">
+        <a href="#" class="block px-4 py-2 rounded bg-blue-50 text-blue-700 font-medium"><i
+            class="fa-solid fa-list mr-2"></i> Productos</a>
+        <a href="#" class="block px-4 py-2 rounded text-gray-600 hover:bg-gray-50 hover:text-gray-900"><i
+            class="fa-solid fa-chart-line mr-2"></i> Estadísticas</a>
+        <a href="#" class="block px-4 py-2 rounded text-gray-600 hover:bg-gray-50 hover:text-gray-900"><i
+            class="fa-solid fa-users mr-2"></i> Clientes</a>
+        <a href="#" class="block px-4 py-2 rounded text-gray-600 hover:bg-gray-50 hover:text-gray-900"><i
+            class="fa-solid fa-gear mr-2"></i> Configuración</a>
+      </nav>
+      <div class="p-4 border-t">
+        <button id="btn-logout" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded"><i
+            class="fa-solid fa-right-from-bracket mr-2"></i> Salir</button>
+      </div>
+    </div>
+
+    <div class="flex-grow flex flex-col">
+      <header class="bg-white shadow-sm flex items-center justify-between px-8 py-4">
+        <h2 class="text-2xl font-semibold text-gray-800">Gestión de Productos</h2>
+
+        <div class="flex items-center space-x-4">
+          <button class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-bell text-xl"></i></button>
+          <div class="h-8 w-px bg-gray-300"></div>
+          <div class="flex items-center space-x-3">
+            <span id="user-greeting" class="text-sm font-medium text-gray-700">Usuario</span>
+            <img id="profile-img" src="https://via.placeholder.com/40" alt="Perfil"
+              class="h-10 w-10 rounded-full object-cover border-2 border-blue-500 shadow-sm"
+              onerror="this.src='https://ui-avatars.com/api/?name=User&background=random'">
+          </div>
+        </div>
+      </header>
+
+      <main class="p-8 flex-grow bg-gray-50 overflow-auto">
+        <div class="bg-white shadow rounded-lg border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-lg font-medium text-gray-900">Listado de Artículos</h3>
+            <button
+              class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded text-sm font-medium transition-colors shadow-sm">
+              <i class="fa-solid fa-plus mr-1"></i> Nuevo Producto
+            </button>
+          </div>
+
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody id="tabla-productos" class="bg-white divide-y divide-gray-200">
+              <tr>
+                <td colspan="4" class="px-6 py-4 text-center text-gray-500">Cargando productos...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="action-feedback"
+          class="hidden mt-4 bg-green-100 text-green-800 p-3 rounded text-center font-medium shadow-sm transition-opacity">
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function () {
+      // Configuración global para que jQuery envíe y reciba las Cookies en las peticiones AJAX
+      $.ajaxSetup({
+        xhrFields: {
+          withCredentials: true
+        }
+      });
+
+      // Función para obtener la URL base ingresada
+      function getBaseUrl() {
+        let url = $('#base-url').val().trim();
+        return url.endsWith('/') ? url.slice(0, -1) : url;
+      }
+
+      // UI: Status update
+      function updateStatus(msg, isError = false) {
+        const statusEl = $('#server-status');
+        statusEl.text(msg);
+        statusEl.removeClass('text-yellow-400 text-green-400 text-red-400')
+          .addClass(isError ? 'text-red-400' : 'text-green-400');
+        setTimeout(() => {
+          statusEl.text('Esperando peticiones...').removeClass('text-green-400 text-red-400').addClass('text-yellow-400');
+        }, 3000);
+      }
+
+      // === 1. POST /login ===
+      $('#form-login').on('submit', function (e) {
+        e.preventDefault();
+        $('#login-error').addClass('hidden');
+
+        const body = {
+          nombre: $('#login-nombre').val(),
+          email: $('#login-email').val(),
+          pass: $('#login-pass').val()
+        };
+
+        $.ajax({
+          url: getBaseUrl() + '/login',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(body),
+          success: function (response) {
+            updateStatus('200 OK - Login exitoso');
+
+            // Mostrar el nombre devuelto
+            if (response && response.nombre) {
+              $('#user-greeting').text(response.nombre);
+            }
+
+            // Cambiar de pantalla
+            $('#login-view').hide();
+            $('#dashboard-view').removeClass('hidden');
+
+            // Cargar datos del dashboard
+            cargarProductos();
+            cargarImagenPerfil();
+          },
+          error: function (xhr) {
+            updateStatus(`Error ${xhr.status} en Login`, true);
+            $('#login-error').text('Error al conectar con /login. Revisa tu QuickServer.').removeClass('hidden');
+          }
+        });
+      });
+
+      // === 2. GET /productos ===
+      function cargarProductos() {
+        $.ajax({
+          url: getBaseUrl() + '/productos',
+          method: 'GET',
+          success: function (productos) {
+            updateStatus('200 OK - Productos cargados');
+            const tbody = $('#tabla-productos');
+            tbody.empty();
+
+            if (Array.isArray(productos) && productos.length > 0) {
+              productos.forEach(prod => {
+                const row = `
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#${prod.id}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${prod.nombre}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$${prod.precio.toLocaleString('es-AR')}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-blue-600 hover:text-blue-900 mx-2 btn-editar" data-id="${prod.id}"><i class="fa-solid fa-pen"></i> Editar</button>
+                                            <button class="text-red-600 hover:text-red-900 mx-2"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                `;
+                tbody.append(row);
+              });
+            } else {
+              tbody.append('<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No se encontraron productos o el formato es incorrecto.</td></tr>');
+            }
+          },
+          error: function (xhr) {
+            updateStatus(`Error ${xhr.status} en GET /productos`, true);
+            $('#tabla-productos').html('<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">Error al cargar productos (Revisá tu config!).</td></tr>');
+          }
+        });
+      }
+
+      // === 3. PATCH /productos/:id ===
+      // Usamos delegación de eventos porque los botones se crean dinámicamente
+      $('#tabla-productos').on('click', '.btn-editar', function () {
+        const idProducto = $(this).data('id');
+
+        // Efecto visual de "cargando" en el botón
+        const originalText = $(this).html();
+        $(this).html('<i class="fa-solid fa-spinner fa-spin"></i> Guardando...');
+
+        $.ajax({
+          url: getBaseUrl() + '/productos/' + idProducto,
+          method: 'PATCH',
+          contentType: 'application/json',
+          data: JSON.stringify({ id: parseInt(idProducto) }),
+          success: function (response) {
+            updateStatus(`200 OK - Producto ${idProducto} actualizado`);
+            mostrarFeedback(`¡Producto #${idProducto} actualizado con éxito mediante PATCH!`);
+          },
+          error: function (xhr) {
+            updateStatus(`Error ${xhr.status} en PATCH`, true);
+            mostrarFeedback(`Error al actualizar (Revisá tu config!).`, true);
+          },
+          complete: () => {
+            $(this).html(originalText);
+          }
+        });
+      });
+
+      // === 4. GET /perfil/imagen ===
+      function cargarImagenPerfil() {
+        // Al asignar el atributo src, el navegador hace la petición GET automáticamente
+        // y adjuntará las cookies si el dominio coincide y CORS lo permite.
+        const imgUrl = getBaseUrl() + '/perfil/imagen';
+        $('#profile-img').attr('src', imgUrl);
+
+        // Nota para el profe: Para que el navegador envíe la cookie en el tag <img>
+        // cruzando dominios (localhost: frontend -> localhost:3000 backend), 
+        // tu QuickServer debe configurar correctamente los headers CORS (Access-Control-Allow-Credentials: true).
+      }
+
+      // Utilidades UI
+      function mostrarFeedback(msg, isError = false) {
+        const el = $('#action-feedback');
+        el.text(msg)
+          .removeClass('hidden bg-green-100 text-green-800 bg-red-100 text-red-800')
+          .addClass(isError ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800')
+          .fadeIn();
+        setTimeout(() => el.fadeOut(), 4000);
+      }
+
+      $('#btn-logout').click(function () {
+        // Simplemente recarga la página para "limpiar" la vista en este entorno educativo
+        window.location.reload();
+      });
+
+      $('#btn-set-url').click(function () {
+        // Pequeño feedback visual
+        $(this).text('¡Guardado!').removeClass('bg-blue-600').addClass('bg-green-600');
+        setTimeout(() => {
+          $(this).text('Fijar URL').removeClass('bg-green-600').addClass('bg-blue-600');
+        }, 1500);
+      });
+    });
+  </script>
+</body>
+
+</html>
