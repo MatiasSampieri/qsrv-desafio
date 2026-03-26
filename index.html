@@ -159,8 +159,9 @@
 
       // Función para obtener la URL base ingresada
       function getBaseUrl() {
-        let url = $('#base-url').val().trim();
-        return url.endsWith('/') ? url.slice(0, -1) : url;
+        //let url = $('#base-url').val().trim();
+        //return url.endsWith('/') ? url.slice(0, -1) : url;
+        return window.location.origin
       }
 
       // UI: Status update
